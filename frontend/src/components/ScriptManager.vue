@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { createScript, fetchScripts, setScriptActive, updateScript } from "../api/client";
+import { createScript, setScriptActive, updateScript } from "../api/client";
 import { DIFFICULTY_OPTIONS, GENRE_OPTIONS } from "../constants/options";
+import { useScriptStore } from "../state/scripts";
 import type { Script, ScriptForm } from "../types";
 
+const scriptStore = useScriptStore();
 const loading = ref(false);
-const scripts = ref<Script[]>([]);
 
 const filters = reactive({
   name: "",
@@ -15,6 +16,17 @@ const filters = reactive({
   difficulty: "",
   includeInactive: true,
 });
+
+/** 表格数据直接派生自共享 store：候选与场次发布页永远看到同一份剧本状态。 */
+const scripts = computed(() =>
+  scriptStore.scripts.value.filter((script) => {
+    if (!filters.includeInactive && !script.active) return false;
+    if (filters.name && !script.name.toLowerCase().includes(filters.name.trim().toLowerCase())) return false;
+    if (filters.genre && script.genre !== filters.genre) return false;
+    if (filters.difficulty && script.difficulty !== filters.difficulty) return false;
+    return true;
+  }),
+);
 
 const dialogVisible = ref(false);
 const dialogTitle = ref("新增剧本");
@@ -44,20 +56,9 @@ const rules: FormRules<ScriptForm> = {
   maxPlayers: [{ required: true, message: "请输入人数上限", trigger: "blur" }],
 };
 
-async function loadScripts() {
-  loading.value = true;
-  try {
-    scripts.value = await fetchScripts({
-      name: filters.name || undefined,
-      genre: filters.genre || undefined,
-      difficulty: filters.difficulty || undefined,
-      includeInactive: filters.includeInactive,
-    });
-  } catch (error) {
-    ElMessage.error((error as Error).message || "加载剧本列表失败");
-  } finally {
-    loading.value = false;
-  }
+// 筛选为本地派生，查询/重置只更新条件；网络加载统一走 store
+function loadScripts() {
+  return scriptStore.load();
 }
 
 function resetFilters() {
@@ -65,7 +66,6 @@ function resetFilters() {
   filters.genre = "";
   filters.difficulty = "";
   filters.includeInactive = true;
-  void loadScripts();
 }
 
 function openCreate() {
@@ -112,7 +112,8 @@ async function submitForm() {
       ElMessage.success("剧本已更新");
     }
     dialogVisible.value = false;
-    await loadScripts();
+    // 刷新共享 store：表格与场次发布候选同步更新，无需刷新页面
+    await scriptStore.refresh();
   } catch (error) {
     ElMessage.error((error as Error).message || "保存失败");
   } finally {
@@ -136,7 +137,7 @@ async function toggleActive(script: Script) {
   try {
     await setScriptActive(script.id, nextActive);
     ElMessage.success(nextActive ? "剧本已启用" : "剧本已停用");
-    await loadScripts();
+    await scriptStore.refresh();
   } catch (error) {
     ElMessage.error((error as Error).message || "状态更新失败");
   }
@@ -148,7 +149,16 @@ function difficultyTagType(difficulty: string): "success" | "warning" | "danger"
   return "danger";
 }
 
-onMounted(loadScripts);
+onMounted(async () => {
+  loading.value = true;
+  try {
+    await loadScripts();
+  } catch (error) {
+    ElMessage.error((error as Error).message || "加载剧本列表失败");
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <template>

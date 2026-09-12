@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { cancelRegistration, createSession, fetchScripts, fetchSessions, registerForSession } from "../api/client";
-import type { Script, SessionForm, SessionView } from "../types";
+import { cancelRegistration, createSession, fetchSessions, registerForSession } from "../api/client";
+import { useScriptStore } from "../state/scripts";
+import type { SessionForm, SessionView } from "../types";
+
+const scriptStore = useScriptStore();
+/** 候选剧本来自共享 store：剧本页增改/停用/启用后即时同步，停用剧本不会出现在候选中。 */
+const activeScripts = scriptStore.activeScripts;
 
 const loading = ref(false);
 const sessions = ref<SessionView[]>([]);
-const activeScripts = ref<Script[]>([]);
 
 const publishVisible = ref(false);
 const publishing = ref(false);
@@ -37,9 +41,8 @@ function defaultStartTime(): string {
 async function loadAll() {
   loading.value = true;
   try {
-    const [sessionList, scriptList] = await Promise.all([fetchSessions(), fetchScripts({})]);
+    const [sessionList] = await Promise.all([fetchSessions(), scriptStore.load()]);
     sessions.value = sessionList;
-    activeScripts.value = scriptList;
   } catch (error) {
     ElMessage.error((error as Error).message || "加载场次失败");
   } finally {
