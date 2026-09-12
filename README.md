@@ -20,10 +20,42 @@ docker compose up -d
 ## 项目主要功能
 
 - 剧本库与DM管理：录入剧本信息（名称、类型、难度、时长、人数、主持人DM要求），上传剧本封面与简介，关联专属DM主持人，支持按标签筛选与搜索。
-- 场次排期与拼车位：门店设置每日开放场次时段（如14:00场、19:00场），每场显示已报名人数和剩余空位，玩家可单人报名加入拼车位或自行组满局。
+- **剧本排期与拼车报名（已实现）**：门店可新增、编辑、停用剧本，按名称、类型、难度查找；发布场次时选择剧本、开场时间、主持人与人数上限。玩家可报名、取消报名，每次操作后剩余名额立即更新；满员不能报名，取消后空位立即释放可再报；重复报名、满员、参数错误等场景均返回明确中文原因。
 - 玩家组局与角色分配：满局后DM可为玩家分配角色，支持随机分配与手动调整，系统记录每次组局玩家名单与角色分配结果。
 - 会员积分与等级体系：注册会员消费积累积分，设置等级规则（如青铜/白银/黄金/钻石），不同等级享受折扣与优先拼车位权益，积分可兑换周边或抵扣费用。
 - 营收与上座率分析：管理员查看每日/周/月营收报表、各剧本上座率排行、DM带本场次与评分统计，支持导出营业数据。
+
+### 排期与拼车报名模块 API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/scripts?name=&genre=&difficulty=&includeInactive=` | 剧本列表，支持按名称（模糊）、类型、难度查找 |
+| POST | `/api/scripts` | 新增剧本 |
+| PUT | `/api/scripts/{id}` | 编辑剧本 |
+| PATCH | `/api/scripts/{id}/active` | 停用 / 启用剧本（停用后不能发布新场次） |
+| GET | `/api/sessions` | 场次列表，含已报名人数、剩余名额、是否满员与报名名单 |
+| POST | `/api/sessions` | 发布场次（剧本、开场时间、主持人、人数上限） |
+| POST | `/api/sessions/{id}/registrations` | 玩家报名（请求体：`playerName`、`contact?`） |
+| DELETE | `/api/sessions/{id}/registrations?playerName=` | 玩家取消报名，空位立即释放 |
+
+业务规则（并发安全）：报名与取消在数据库事务内对场次行加排他锁后再校验名额，唯一约束 `(session_id, player_name)` 兜底重复报名；因此「重复报名」「满员报名」「取消不存在的报名」都会返回 HTTP 400 与中文原因。
+
+### 本地不依赖数据库快速验证
+
+后端默认使用 H2 内存库（启动时自动建表并写入种子剧本/场次），无需 PostgreSQL 即可运行：
+
+```bash
+cd backend
+mvn spring-boot:run
+# 正常报名
+curl -X POST http://localhost:29502/api/sessions/1/registrations \
+  -H 'Content-Type: application/json' -d '{"playerName":"玩家A"}'
+# 再次提交相同玩家 -> 400：玩家「玩家A」已报名该场次，不能重复报名
+# 报满后再报名 -> 400：该场次已满员（6/6），无法报名
+# 取消后空位立即可再报
+curl -X DELETE 'http://localhost:29502/api/sessions/1/registrations?playerName=%E7%8E%A9%E5%AE%B6A'
+```
+
 
 ## 本地开发方式
 

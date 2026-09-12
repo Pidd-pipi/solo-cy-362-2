@@ -1,8 +1,5 @@
--- 剧本杀门店运营管理系统：剧本排期与拼车报名模块
--- PostgreSQL 15 初始化脚本（Spring Boot 启动时也会自动执行 classpath:schema.sql，本文件供手动建库/文档参考）
-
 CREATE TABLE IF NOT EXISTS operation_records (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   module_name VARCHAR(120) NOT NULL,
   owner_name VARCHAR(80) NOT NULL,
   status VARCHAR(40) NOT NULL,
@@ -45,11 +42,12 @@ CREATE TABLE IF NOT EXISTS session_registrations (
 CREATE INDEX IF NOT EXISTS idx_registrations_session ON session_registrations(session_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_start_time ON game_sessions(start_time);
 
+-- 种子数据：剧本
 INSERT INTO operation_records (module_name, owner_name, status, metric)
 SELECT '剧本库与DM管理', '运营组', 'ready', '100%'
 WHERE NOT EXISTS (SELECT 1 FROM operation_records LIMIT 1);
 
--- 种子剧本
+-- 种子数据：剧本
 INSERT INTO scripts (name, genre, difficulty, duration_minutes, min_players, max_players, dm_requirement, description, active)
 SELECT '年轮', '推理本', '困难', 300, 4, 6, '资深DM（控场/计时）', '时间循环题材的硬核推理本，适合进阶玩家。', TRUE
 WHERE NOT EXISTS (SELECT 1 FROM scripts WHERE name = '年轮');
@@ -66,7 +64,7 @@ INSERT INTO scripts (name, genre, difficulty, duration_minutes, min_players, max
 SELECT '病娇男孩的精分日记', '恐怖本', '中等', 300, 4, 7, '恐怖向DM（灯光/音效）', '微恐演绎本，需要门店配合氛围布置。', TRUE
 WHERE NOT EXISTS (SELECT 1 FROM scripts WHERE name = '病娇男孩的精分日记');
 
--- 种子场次
+-- 种子数据：场次（使用未来固定时间，便于页面直接演示报名）
 INSERT INTO game_sessions (script_id, start_time, host_name, capacity)
 SELECT s.id, TIMESTAMP '2026-09-20 14:00:00', 'DM-小鹿', 6
 FROM scripts s

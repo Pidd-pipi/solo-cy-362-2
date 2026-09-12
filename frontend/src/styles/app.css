@@ -166,3 +166,115 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- 模块页签 ---- */
+.module-tabs {
+  background: color-mix(in srgb, #f4f7fb 82%, white 18%);
+  border: 1px solid color-mix(in srgb, #19212e 12%, transparent);
+  border-radius: 10px;
+  padding: 8px clamp(12px, 2vw, 24px) 24px;
+  box-shadow: 0 18px 50px color-mix(in srgb, #19212e 8%, transparent);
+}
+
+.module-tabs :deep(.el-tabs__item) {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.panel-card {
+  padding-top: 6px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-form {
+  margin-bottom: 0;
+}
+
+.panel-hint {
+  margin: 4px 0 0;
+  max-width: 680px;
+  color: color-mix(in srgb, #19212e 65%, #3268b8 35%);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.data-table {
+  width: 100%;
+}
+
+.empty-alert {
+  margin-bottom: 12px;
+}
+
+.session-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.script-name {
+  font-weight: 700;
+}
+
+.tag-row {
+  display: flex;
+  gap: 6px;
+}
+
+.progress-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-text {
+  font-size: 13px;
+}
+
+.slots-full {
+  color: #c45656;
+}
+
+.player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.player-tag {
+  margin: 0;
+}
+
+.muted-text {
+  color: color-mix(in srgb, #19212e 45%, transparent);
+  font-size: 13px;
+}
+
+.player-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-sep {
+  color: color-mix(in srgb, #19212e 60%, transparent);
+}
+
+.form-hint {
+  margin-left: 12px;
+  font-size: 12px;
+  color: color-mix(in srgb, #19212e 55%, transparent);
+}
+
+.form-alert {
+  margin-top: 8px;
+}
