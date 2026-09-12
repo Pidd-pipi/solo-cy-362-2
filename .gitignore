@@ -10,3 +10,7 @@ backend/target/
 coverage/
 .pytest_cache/
 *.class
+# 测试产物
+frontend/vitest-coverage/
+*.dump
+*.dumpstream

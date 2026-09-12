@@ -1,0 +1,20 @@
+# 测试专用配置：独立 H2 内存库，不依赖外部 PostgreSQL 或固定端口
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:app-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+  jackson:
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
